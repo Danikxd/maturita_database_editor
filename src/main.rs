@@ -106,7 +106,7 @@ async fn update_programmes(
 ) -> Result<(), sea_orm::DbErr> {
     for programme in programmes {
         if let Some(&channel_id) = channel_mapping.get(&programme.channel_id) {
-            // Convert times to UTC to match database expectations
+            
             let programme_start = programme.start.with_timezone(&Utc);
             let programme_end = programme.stop.with_timezone(&Utc);
 
@@ -118,11 +118,11 @@ async fn update_programmes(
                 .await?;
 
             if let Some(existing) = existing_programme {
-                // Check if either the title or the end time has changed
+             
                 if existing.title != programme.title || existing.end != programme_end {
                     let midnight = programme_start.date().and_hms(23, 59, 59);
 
-                    // Delete all programmes from the current time until midnight if there's a change
+                  
                     series::Entity::delete_many()
                         .filter(series::Column::ChannelId.eq(channel_id))
                         .filter(
@@ -133,7 +133,7 @@ async fn update_programmes(
                         .exec(db)
                         .await?;
 
-                  // Reinsert updated programmes for the same channel until midnight
+                
                   for p in programmes.iter().skip_while(|p| {
                     let p_start = p.start.with_timezone(&Utc);
                     Some(&channel_id) != channel_mapping.get(&p.channel_id) || p_start < programme_start
@@ -141,10 +141,10 @@ async fn update_programmes(
                     if let Some(&id) = channel_mapping.get(&p.channel_id) {
                         let start_utc = p.start.with_timezone(&Utc);
                         if start_utc > midnight {
-                            break; // Stop inserting if the time is past midnight
+                            break; 
                         }
 
-                        // Insert new programme details
+                     
                         let new_programme = series::ActiveModel {
                             channel_id: Set(id),
                             title: Set(p.title.clone()),
