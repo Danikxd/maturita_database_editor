@@ -10,18 +10,19 @@ use std::env;
 use std::fs::read_to_string;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use reqwest::get;
 
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, Database, DatabaseConnection, DatabaseTransaction,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, Database, 
     EntityTrait, QueryFilter, Set,
 };
 
-use sea_orm::{Condition, QueryOrder, sea_query::Expr};
+use sea_orm::Condition;
 use tv_channels::Entity as ChannelEntity;
-use series::Entity as SeriesEntity;
 
 
-use chrono::{NaiveTime, Timelike};
+
+
 
 use dotenv::dotenv;
 
@@ -177,7 +178,14 @@ async fn update_programmes(
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Read the XML data
-    let xml_data = read_to_string("guide.xml")?;
+    
+
+
+
+    let url = env::var("GUIDE_URL")?;
+    let response = get(&url).await?;
+    let xml_data = response.text().await?;
+
     let tv: TV = from_str(&xml_data)?;
 
   
